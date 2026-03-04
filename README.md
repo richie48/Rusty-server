@@ -1,7 +1,7 @@
 Http server in rust POC. This is a basic http server that listens on a port and handles incoming connections
 
 ## How to setup
-Install rust from the official (website)[https://www.rust-lang.org/tools/install] and add it to your path. 
+Install rust from the official [website](https://www.rust-lang.org/tools/install) and add it to your path. 
 From the root of the project run the below command to build the project
 ```bash
     cargo build
