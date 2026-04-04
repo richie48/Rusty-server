@@ -29,18 +29,24 @@ fn handle_connection(mut stream: TcpStream) {
 
     let mut buffer = [0; 1024];
     match stream.read(&mut buffer) {
-        Ok(n) => {
+        Ok(buffer_end) => {
             // Parse request, handle invalid UTF-8 bytes
-            let request = String::from_utf8_lossy(&buffer[..n]);
+            let request = String::from_utf8_lossy(&buffer[..buffer_end]);
             println!("Received HTTP request: {}", request);
 
             // Evaluate and send response
-            let request_line = request.lines().next();
-            if let Some(request_line) = request_line {
+            if let Some(request_line) = request.lines().next() {
                 let url = request_line.split_whitespace().nth(1);
                 let response = match url {
-                    Some("/") => "HTTP/1.1 200 OK\r\n\r\n",
-                    _ => "HTTP/1.1 404 Not Found\r\n\r\n",
+                    Some("/") => "HTTP/1.1 200 OK\r\n\r\n".to_string(),
+                    Some(text) => {
+                        if let Some(body) = text.strip_prefix("/echo/") {
+                            format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", body.len(), body)
+                        } else {
+                            "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
+                        }
+                    }
+                    _ => "HTTP/1.1 404 Not Found\r\n\r\n".to_string(),
                 };
                 stream.write_all(response.as_bytes()).unwrap();
                 println!("Sent HTTP response: {}", response);

@@ -15,4 +15,11 @@ Run `cargo run` in the project directory to start the server. You can then send 
 
     curl -v http://localhost:4221/hello
     # Expected output "HTTP/1.1 404 NOT FOUND"
+
+    curl -v http://localhost:4221/echo/abc
+    # Sent HTTP response: HTTP/1.1 200 OK
+    # Content-Type: text/plain
+    # Content-Length: 3
+
+    # abc
 ``` 
