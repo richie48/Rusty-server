@@ -11,10 +11,10 @@ From the root of the project run the below command to build the project
 Run `cargo run` in the project directory to start the server. You can then send requests to `http://localhost:4221` to see the server in action. For example, you can use `curl` to send a request:
 ```bash
     curl -v http://localhost:4221
-    # Expected output "HTTP/1.1 200 OK"
+    # Sent HTTP response: "HTTP/1.1 200 OK"
 
     curl -v http://localhost:4221/hello
-    # Expected output "HTTP/1.1 404 NOT FOUND"
+    # Sent HTTP response: "HTTP/1.1 404 NOT FOUND"
 
     curl -v http://localhost:4221/echo/abc
     # Sent HTTP response: HTTP/1.1 200 OK
@@ -22,4 +22,11 @@ Run `cargo run` in the project directory to start the server. You can then send 
     # Content-Length: 3
 
     # abc
+
+    curl -v --header "User-Agent: agent/1.2" http://localhost:4221/user-agent
+    # Sent HTTP response: HTTP/1.1 200 OK
+    # Content-Type: text/plain
+    # Content-Length: 9
+
+    # agent/1.2
 ``` 

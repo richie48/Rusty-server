@@ -35,12 +35,21 @@ fn handle_connection(mut stream: TcpStream) {
             println!("Received HTTP request: {}", request);
 
             // Evaluate and send response
-            if let Some(request_line) = request.lines().next() {
-                let url = request_line.split_whitespace().nth(1);
+            let mut request_lines = request.lines();
+            if let Some(url_line) = request_lines.next() {
+                let url = url_line.split_whitespace().nth(1);
                 let response = match url {
-                    Some("/") => "HTTP/1.1 200 OK\r\n\r\n".to_string(),
+                    Some("/user-agent") => {
+                        let body = request_lines
+                            .find(|line| line.starts_with("User-Agent: "))
+                            .and_then(|line| line.strip_prefix("User-Agent: "))
+                            .unwrap_or("");
+                        format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", body.len(), body)
+                    }
                     Some(text) => {
-                        if let Some(body) = text.strip_prefix("/echo/") {
+                        if text == "/" {
+                            "HTTP/1.1 200 OK\r\n\r\n".to_string()
+                        } else if let Some(body) = text.strip_prefix("/echo/") {
                             format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", body.len(), body)
                         } else {
                             "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
