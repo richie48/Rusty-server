@@ -1,6 +1,7 @@
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::thread;
 
 const DEFAULT_PORT: u16 = 4221;
 
@@ -12,6 +13,9 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
+                thread::spawn(|| {
+                    handle_connection(stream);
+                });
                 handle_connection(stream);
             }
             Err(e) => {
@@ -24,8 +28,13 @@ fn main() {
 fn handle_connection(mut stream: TcpStream) {
     match stream.peer_addr() {
         Ok(address) => println!("Handling connection from {}", address),
-        Err(e) => println!("Handling connection (peer address unavailable: {})", e),
+        Err(e) => {
+            println!("Handling connection (peer address unavailable: {})", e);
+            return;
+        }
     }
+
+
 
     let mut buffer = [0; 1024];
     match stream.read(&mut buffer) {
