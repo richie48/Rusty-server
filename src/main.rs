@@ -1,6 +1,9 @@
+use std::env;
+use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::path::PathBuf;
 use std::thread;
 
 const DEFAULT_PORT: u16 = 4221;
@@ -16,7 +19,6 @@ fn main() {
                 thread::spawn(|| {
                     handle_connection(stream);
                 });
-                handle_connection(stream);
             }
             Err(e) => {
                 println!("Error: {}", e);
@@ -34,8 +36,6 @@ fn handle_connection(mut stream: TcpStream) {
         }
     }
 
-
-
     let mut buffer = [0; 1024];
     match stream.read(&mut buffer) {
         Ok(buffer_end) => {
@@ -47,6 +47,7 @@ fn handle_connection(mut stream: TcpStream) {
             let mut request_lines = request.lines();
             if let Some(url_line) = request_lines.next() {
                 let url = url_line.split_whitespace().nth(1);
+
                 let response = match url {
                     Some("/user-agent") => {
                         let body = request_lines
@@ -60,6 +61,20 @@ fn handle_connection(mut stream: TcpStream) {
                             "HTTP/1.1 200 OK\r\n\r\n".to_string()
                         } else if let Some(body) = text.strip_prefix("/echo/") {
                             format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", body.len(), body)
+                        } else if let Some(file_name) = text.strip_prefix("/files/") {
+                            // Find path to file directory
+                            let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+                            let file_path = project_root.join("static").join(file_name);
+
+                            // Check and read file content
+                            match file_path.try_exists() {
+                                Ok(true) => {
+                                    let body: String =
+                                        fs::read_to_string(&file_path).unwrap_or("".to_string());
+                                    format!("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n{}", body.len(), body)
+                                }
+                                _ => "HTTP/1.1 404 Not Found\r\n\r\n".to_string(),
+                            }
                         } else {
                             "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
                         }
